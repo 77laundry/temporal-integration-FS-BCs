@@ -1,0 +1,144 @@
+
+load_file("nrngui.hoc")
+v_init = -68
+cvode.active(0)
+objref cv
+cv=new CVode(0)
+tstop=200           
+steps_per_ms=10
+dt=1/steps_per_ms
+n=int(tstop/dt)
+
+
+objref msec
+msec = new Vector(n,0)
+for q=0,n-1 {msec.x[q]=q*dt}
+
+xopen("template.hoc")
+objref FSBCtemplate
+FSBCtemplate=new FSBC("J31a.hoc")
+
+xopen("init.hoc")
+current_balance(-68)
+xopen("graph.hoc")
+    addgraph("FSBCtemplate.soma.v(0.5)",-80,60)
+    //addgraph("FSBCtemplate.dendrite[199].v(0.5)",-80,60)
+
+//---------------------------------- total number of dendrite
+prox = 0
+forsec FSBCtemplate.dend_prox {         
+	prox = prox +1
+	}
+
+dist= 0
+
+forsec FSBCtemplate.dend_dist {  
+	dist = dist +1
+	}
+dend_num = prox + dist 
+synapses_num=5 //number of synapses activated in each dendrite
+asy_num=10 //number of asynchronous time window
+dend=104  //chosen dendrite
+
+//---------------------------------- synapses
+objref netstim_obj
+netstim_obj=new NetStim(0.5)
+netstim_obj.interval=80    
+netstim_obj.number=1
+netstim_obj.start=10
+
+//----------------------------------record&save voltage
+objref v_record,recv,rect,vol
+proc rec_voltage(){
+    recv=new Vector(n)
+    rect=new Vector(n)
+    for i=0,n-1  {rect.x[i]=i*dt}
+    FSBCtemplate.soma cv.record(&FSBCtemplate.soma.v(0.5),recv,rect,1)
+    //FSBCtemplate.dendrite[dend] cv.record(&v(0.5),recv,rect,1)
+}
+strdef target_path
+proc save_voltage(){
+     v_record=new File()
+     sprint(target_path,"%s","test.dat")
+     v_record.wopen(target_path)
+     vol=new Vector()
+}  
+//rec_voltage()
+save_voltage()
+
+//----------------------------------ttx
+proc ttx() {
+    forsec FSBCtemplate.somatic {
+        for(x) {
+            if(ismembrane("Nafx")) for(x) { gnafbar_Nafx(x) = gnafbar_Nafx(x)*0.0}
+        }
+    }
+    forsec FSBCtemplate.axonal {
+        for(x) {
+            if(ismembrane("Nafx")) for(x) { gnafbar_Nafx(x) = gnafbar_Nafx(x)*0.0}
+        }
+    }
+    forsec FSBCtemplate.dend_prox {
+        for(x) {
+            if(ismembrane("Nafx")) for(x) { gnafbar_Nafx(x) = gnafbar_Nafx(x)*1}
+        }
+    }
+    forsec FSBCtemplate.dend_dist {
+        for(x) {
+            if(ismembrane("Nafx")) for(x) { gnafbar_Nafx(x) = gnafbar_Nafx(x)*1}
+        }
+    }
+}
+
+
+//----------------------------------asynchronous
+
+objref ampa[500],nmda[500]
+objref coampa[500],conmda[500]
+objref randend,null,rd
+
+
+for  clo=0,14{ //5-75 paired synaptic inputs
+
+    for runs=0,4{
+    rd=new Random(15*runs)    //change seed before same run 
+    rd.uniform(0,1)
+
+      
+   for k=0,synapses_num-1{                               
+                ampa[k]=null
+                nmda[k]=null
+                spot=rd.repick()
+                FSBCtemplate.dendrite[dend]{ampa[k]=new CPGLUIN(spot)}
+                FSBCtemplate.dendrite[dend]{nmda[k]=new NMDAIN(spot)}
+                //print "Random Spot is", spot
+                }
+
+    randend=new Random(2*runs)
+    delstim=randend.uniform(0.1,asy_num)
+
+     for l=0,synapses_num-1{
+                 delstim=randend.repick()
+                 if(delstim<0){delstim=delstim*(-1)} 
+                 coampa[l]=new NetCon(netstim_obj,ampa[l],-20,delstim,7.5e-4)
+                 conmda[l]=new NetCon(netstim_obj,nmda[l],-20,delstim,3.2e-4*5)
+                 //print "del=", delstim              
+                 }  
+
+            rec_voltage() //为了记录树突
+            print "Now stimulating ",synapses_num, " synapses with time window ",asy_num,"on ", dend,"compartment"
+            ttx() 
+            run()   
+            vol = recv.c.sub(0)
+            vol.printf(v_record,"%g\t") 
+
+              
+
+         }
+         synapses_num=synapses_num+5
+
+         
+        }
+
+v_record.close()
+

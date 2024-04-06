@@ -1,0 +1,25 @@
+// A function to display graph
+
+objref window[60]
+nwin=0
+
+proc addgraph() {
+    nwin=nwin+1
+    i=nwin-1
+    window[i] = new Graph()
+    window[i].addvar($s1,1,0)
+    window[i].size(0,tstop,$2,$3) 
+    window[i].xaxis()
+    window[i].yaxis()
+    window[i].label(0.93,0.47,"(ms)")
+    window[i].label(0.05,0.93,"(mV)")
+    window[i].label(0.1,1.0)
+    window[i].save_name("graphList[0].")
+    graphList[0].append(window[i])
+}
+
+if(ismenu==0) {
+  nrnmainmenu()                 // create main menu
+  nrncontrolmenu()              // crate control menu
+  ismenu=1
+}

@@ -1,0 +1,145 @@
+// Template for J31a
+
+begintemplate FSBC
+external v_init
+objref numprox, numdist
+objref all, somatic, axonal, dend_prox, dend_dist
+public soma, axon, dendrite
+public init
+public all, somatic, axonal, dend_prox, dend_dist
+public numdend_prox, numdend_dist
+public numprox, numdist
+create soma, axon, dendrite
+
+proc init(){
+        xopen($s1)
+        
+        numdend_prox=0
+        numdend_dist=0
+        forsec dend_prox numdend_prox = numdend_prox + 1
+        forsec dend_dist numdend_dist = numdend_dist + 1
+   	
+       	soma_Nafin= 0.045                                     
+		soma_kdrin=0.018*2
+		soma_Kslowin=0.000725
+		soma_hin=0.00001                                                 
+		soma_kapin=0.0032
+		soma_can=0.0003
+		soma_cat=0.001*2 
+		soma_kctin=0.0001              
+		soma_kcain=20*0.001
+  //........................................................soma properties
+      forsec somatic {
+		nseg= 5 
+		insert pas
+		cm=1.2   
+		g_pas = 1/7600                               
+		e_pas = v_init
+		Ra=172    
+		insert Nafx
+		gnafbar_Nafx= soma_Nafin*0.8*11
+               
+		insert kdrin
+		gkdrbar_kdrin= soma_kdrin*1.2
+
+		insert IKsin	
+		gKsbar_IKsin= soma_Kslowin
+
+		insert hin
+		gbar_hin=soma_hin
+
+		insert kapin
+		gkabar_kapin=soma_kapin
+
+		insert kctin
+		gkcbar_kctin=soma_kctin
+
+		insert kcain
+		gbar_kcain=soma_kcain
+
+		          
+        insert cadynin // cai
+
+		}
+//........................................................axon properties    
+   forsec axonal {
+		
+		nseg=10          
+		insert pas
+		cm=1.2
+		g_pas =1/281600
+		e_pas = -68
+		Ra=172
+
+		insert Nafx
+		gnafbar_Nafx=soma_Nafin*0.8*36
+						                                                                    
+		insert kdrin
+		gkdrbar_kdrin=soma_kdrin*4
+
+		}  
+//........................................................prox dendrite properties        
+   forsec dend_prox {
+		
+		nseg=5
+		insert pas
+		cm=1.2
+		g_pas =1/7600  
+		e_pas = -68                                            
+		Ra=142
+
+		insert Nafx
+		gnafbar_Nafx=soma_Nafin*0.4
+
+		insert kdrin
+		gkdrbar_kdrin=0.018*0.5
+                        
+        insert kapin
+		gkabar_kapin=soma_kapin*0.2                                                      
+
+		insert can 
+		gcabar_can = soma_can
+
+		insert cat
+		gcatbar_cat=soma_cat*0.1
+		  
+		insert cal
+		gcalbar_cal=0.00003  
+
+		insert cadynin
+		     
+		} 
+//........................................................dist dendrite properties  
+   forsec dend_dist {
+		
+		 nseg=5
+		insert pas
+		cm=1.2           //microF/cm2
+		g_pas =1/74300 
+		e_pas = -68                                            
+		Ra=142
+
+		insert Nafx
+		gnafbar_Nafx=soma_Nafin*0.4*0.8
+
+		insert kdrin
+		gkdrbar_kdrin=0.018*0.5                                             
+		        
+        insert kadin
+        gkabar_kadin=1.8*0.001
+		       
+        insert cat
+		gcatbar_cat=soma_cat*0.1
+
+		insert can
+		gcabar_can=soma_can
+		    
+		insert cal
+		gcalbar_cal=0.00003 
+		          
+		insert cadynin
+		       }
+   ko0_k_ion = 3.82   
+   ki0_k_ion = 140 	
+}
+endtemplate FSBC

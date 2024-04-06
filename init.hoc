@@ -1,0 +1,24 @@
+//To balance current
+// written by Yiota Poirazi, July 2001
+
+proc current_balance() {
+
+  finitialize($1)
+  fcurrent()
+
+  printf("Balancing each compartment to %d mV\n", $1)
+
+  forsec FSBCtemplate.all {
+   for (x) {
+    
+      if (ismembrane("na_ion")) {e_pas(x)=v(x)+ina(x)/g_pas(x)} 
+      if (ismembrane("k_ion")) {e_pas(x)=e_pas(x)+ik(x)/g_pas(x)} 
+      if (ismembrane("ca_ion")) {e_pas(x)=e_pas(x)+ica(x)/g_pas(x)}
+      if (ismembrane("h")) {e_pas(x)=e_pas(x)+ihi(x)/g_pas(x)}
+
+    }
+  }
+
+   fcurrent()
+}
+
